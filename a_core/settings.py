@@ -38,31 +38,53 @@ CSRF_TRUSTED_ORIGINS = [ 'https://*' ]
 
 # Application definition
 
-INSTALLED_APPS = [
+SHARED_APPS = [
+    'django_tenants',          # Obrigatório no shared
+    'a_tenant_manager',        # O seu app de controle (Tenants e Domains)
+    
+    # Core do Django necessário para o Admin do Public funcionar
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    # Utilitários globais
     'django_cleanup.apps.CleanupConfig',
-    'django_htmx',
+    'django_browser_reload',
+]
+
+TENANT_APPS = [
+    # Core do Django necessário para o ecossistema de cada cliente
+    'django.contrib.admin',    # Remova se o cliente não puder acessar o admin dele
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
     'django.contrib.sites',
+    
+    # Autenticação isolada por cliente
     'allauth',
     'allauth.account',
+    
+    # Integrações de interface
+    'django_htmx',
 
-    # My apps
-    'a_core',
+    # SEUS APPS DE NEGÓCIO (Exclusivos do Tenant)
     'a_home',
     'a_users',
-    
-    # Third party
-    'django_browser_reload',
+]
+
+INSTALLED_APPS = SHARED_APPS + [
+    app for app in TENANT_APPS if app not in SHARED_APPS
 ]
 
 SITE_ID = 1
 
 MIDDLEWARE = [
+    'django_tenants.middleware.main.TenantMainMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.locale.LocaleMiddleware', 
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -110,11 +132,22 @@ WSGI_APPLICATION = 'a_core.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django_tenants.postgresql_backend',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'PASSWORD': 'postgres',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
+DATABASE_ROUTERS = (
+    'django_tenants.routers.TenantSyncRouter',
+)
+
+
+TENANT_MODEL = 'a_tenant_manager.Tenant'
+TENANT_DOMAIN_MODEL = 'a_tenant_manager.Domain'
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -146,7 +179,7 @@ LANGUAGES = [
     ('es', _('Espanhol')),
 ]
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Sao_Paulo'
 
 USE_I18N = True
 
