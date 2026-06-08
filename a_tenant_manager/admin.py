@@ -1,13 +1,10 @@
 from django.contrib import admin
 from .models import Tenant, Domain
 
-@admin.register(Tenant)
-class TenantAdmin(admin.ModelAdmin):
-    # Alterado de 'created_on' para 'created'
-    list_display = ('schema_name', 'name', 'created')  
-    search_fields = ('schema_name', 'name')
+class TenantAdminSite(admin.AdminSite):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.register(Tenant)
+        self.register(Domain)
 
-@admin.register(Domain)
-class DomainAdmin(admin.ModelAdmin):
-    list_display = ('domain', 'tenant', 'is_primary')
-    search_fields = ('domain',)
+tenant_admin_site = TenantAdminSite(name='tenant_admin_site')

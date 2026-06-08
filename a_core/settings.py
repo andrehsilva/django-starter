@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+from PIL import TiffImagePlugin
 from pathlib import Path
 
 from django.utils.translation import gettext_lazy as _
@@ -71,6 +72,7 @@ TENANT_APPS = [
     
     # Integrações de interface
     'django_htmx',
+    'colorfield',
 
     # SEUS APPS DE NEGÓCIO (Exclusivos do Tenant)
     'a_home',
@@ -86,19 +88,24 @@ SITE_ID = 1
 MIDDLEWARE = [
     'django_tenants.middleware.main.TenantMainMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'django.middleware.locale.LocaleMiddleware', 
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    
+    # 1º Abre a sessão do utilizador
+    'django.contrib.sessions.middleware.SessionMiddleware', 
+    
+    # 2º Define o idioma baseado na sessão aberta
+    'django.middleware.locale.LocaleMiddleware',            
+    
+    # Resto dos middlewares normais abaixo:
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',  # <-- CORRIGIDO AQUI (.middleware.)
     'allauth.account.middleware.AccountMiddleware',
     'django_htmx.middleware.HtmxMiddleware',
 ]
 if DEBUG:
     MIDDLEWARE += ['django_browser_reload.middleware.BrowserReloadMiddleware']
-
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
@@ -106,6 +113,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 ROOT_URLCONF = 'a_core.urls'
+PUBLIC_SCHEMA_URLCONF = 'a_core.urls_public'
 
 TEMPLATES = [
     {
@@ -148,6 +156,7 @@ DATABASE_ROUTERS = (
 
 TENANT_MODEL = 'a_tenant_manager.Tenant'
 TENANT_DOMAIN_MODEL = 'a_tenant_manager.Domain'
+SHOW_PUBLIC_IF_NO_TENANT_FOUND = True
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
